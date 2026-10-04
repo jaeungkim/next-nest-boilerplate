@@ -35,13 +35,13 @@ Open http://localhost:3000. Next rewrites `/api/*` to Nest, so the browser never
 
 ## API types
 
-Nest serves its OpenAPI spec at `/api/docs-json`; the swagger CLI plugin builds schemas from `*.dto.ts` classes and explicit return types. After changing an endpoint, with the API running:
+Nest serves its OpenAPI spec at `/api/docs-json`, built from `*.dto.ts` classes and explicit controller return types (swagger CLI plugin). After changing an endpoint, with `pnpm dev` running:
 
 ```bash
 pnpm --filter @repo/web gen:api
 ```
 
-This rewrites `apps/web/src/lib/schema.d.ts`. Commit it.
+This regenerates `apps/web/src/lib/schema.d.ts`. Commit it. If it fails with `ECONNREFUSED`, the API is not running.
 
 ## Env
 
