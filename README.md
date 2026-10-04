@@ -3,21 +3,45 @@
 pnpm workspace with a Next.js app and a NestJS API.
 
 ```
-apps/web   Next.js 16 (App Router, Tailwind, ESLint)   :3000
-apps/api   NestJS 12 (ESM, Vitest, oxlint)              :3001, routes under /api
+apps/web   Next.js 16 (App Router, Tailwind 4, shadcn/ui)   :3000
+apps/api   NestJS 12 (ESM, oxlint, Swagger)                 :3001, routes under /api
 ```
 
 ## Run
 
 ```bash
 pnpm install
-pnpm dev      # both apps, in parallel
+pnpm dev        # both apps, in parallel
 pnpm build
 pnpm lint
-pnpm test
 ```
 
-Open http://localhost:3000. The page fetches `/api/health`; Next rewrites `/api/*` to the Nest server, so the browser never needs CORS.
+Open http://localhost:3000. Next rewrites `/api/*` to Nest, so the browser never needs CORS. Swagger UI is at http://localhost:3000/api/docs.
+
+## Web stack
+
+| Need               | Library                                               |
+| ------------------ | ----------------------------------------------------- |
+| Server state       | `@tanstack/react-query` + `@suspensive/react-query-5` |
+| API client         | `openapi-fetch` with types from `openapi-typescript`  |
+| Forms              | `react-hook-form` + `@hookform/resolvers` + `zod`     |
+| UI                 | shadcn/ui (Radix), `lucide-react`, `cn`               |
+| Toasts / theme     | `sonner`, `next-themes`                               |
+| Client / URL state | `zustand`, `nuqs`                                     |
+| Utils              | `es-toolkit`                                          |
+| Format             | Prettier + Tailwind plugin                            |
+
+`src/app/page.tsx` uses each one once. Delete it when you start building.
+
+## API types
+
+Nest serves its OpenAPI spec at `/api/docs-json`; the swagger CLI plugin builds schemas from `*.dto.ts` classes and explicit return types. After changing an endpoint, with the API running:
+
+```bash
+pnpm --filter @repo/web gen:api
+```
+
+This rewrites `apps/web/src/lib/schema.d.ts`. Commit it.
 
 ## Env
 
