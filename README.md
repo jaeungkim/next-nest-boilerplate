@@ -1,22 +1,40 @@
 # next-nest-boilerplate
 
-pnpm workspace with a Next.js app and a NestJS API.
+pnpm workspace with a Next.js app and a NestJS API on Postgres.
 
 ```
-apps/web   Next.js 16 (App Router, Tailwind 4, shadcn/ui)   :3000
-apps/api   NestJS 12 (ESM, oxlint, Swagger)                 :3001, routes under /api
+apps/web   Next.js 16 (App Router, Tailwind 4, shadcn/ui)        :3000
+apps/api   NestJS 12 (ESM, Prisma 7, Swagger, oxlint)            :3001, routes under /api
+compose.yaml   Postgres 18 for local dev                         :5432
 ```
 
-## Run
+## Setup
+
+Needs Node 22+, pnpm, and Docker.
 
 ```bash
-pnpm install
-pnpm dev        # both apps, in parallel
-pnpm build
-pnpm lint
+pnpm install                                  # also generates the Prisma client
+cp apps/api/.env.example apps/api/.env
+docker compose up -d --wait                   # start Postgres
+pnpm --filter @repo/api db:migrate            # apply migrations
+pnpm dev                                      # both apps, in parallel
 ```
 
 Open http://localhost:3000. Next rewrites `/api/*` to Nest, so the browser never needs CORS. Swagger UI is at http://localhost:3000/api/docs.
+
+Other commands: `pnpm build`, `pnpm lint`.
+
+## Database
+
+The schema lives in `apps/api/prisma/schema.prisma`. After changing it:
+
+```bash
+pnpm --filter @repo/api db:migrate --name <change>
+```
+
+This creates a migration in `apps/api/prisma/migrations` (commit it), applies it, and regenerates the client in `apps/api/src/generated` (gitignored). Use `PrismaService` in any Nest provider. In production, apply migrations with `pnpm --filter @repo/api exec prisma migrate deploy`.
+
+`docker compose down` stops Postgres; add `-v` to also delete its data.
 
 ## Web stack
 
@@ -45,7 +63,11 @@ This regenerates `apps/web/src/lib/schema.d.ts`. Commit it. If it fails with `EC
 
 ## Env
 
-| Var       | App | Default                 | Notes                                                            |
-| --------- | --- | ----------------------- | ---------------------------------------------------------------- |
-| `PORT`    | api | `3001`                  | Next reads `PORT` too, so set it per app, not on root `pnpm dev` |
-| `API_URL` | web | `http://localhost:3001` | Read by `next.config.ts`, so set it at build                     |
+Each app validates its env with zod at startup and refuses to start on a missing or invalid value. The API reads `apps/api/.env` (see `.env.example`); real environment variables win over the file.
+
+| Var            | App | Default                 | Notes                                                                                          |
+| -------------- | --- | ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `DATABASE_URL` | api | required                | Postgres URL; `.env.example` matches `compose.yaml`                                            |
+| `PORT`         | api | `3001`                  | API only: `next dev` is pinned to 3000. If you change it, set the web app's `API_URL` to match |
+| `NODE_ENV`     | api | `development`           | `development`, `production` or `test`                                                          |
+| `API_URL`      | web | `http://localhost:3001` | Read by `next.config.ts`, so set it at build                                                   |

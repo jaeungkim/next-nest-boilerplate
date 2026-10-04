@@ -8,7 +8,7 @@ export class AppController {
 
   // Explicit return type lets the swagger plugin emit the response schema.
   @Get()
-  health(): HealthDto {
+  health(): Promise<HealthDto> {
     return this.appService.health();
   }
 }

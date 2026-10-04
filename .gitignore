@@ -9,3 +9,6 @@ coverage
 *.log
 .DS_Store
 .claude/settings.local.json
+
+# Prisma client (generated on install)
+apps/api/src/generated
